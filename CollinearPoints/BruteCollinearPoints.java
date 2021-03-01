@@ -6,64 +6,73 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class BruteCollinearPoints {
+    private final LineSegment[] segments;
 
-    private final ArrayList<LineSegment> lineSegments = new ArrayList<>();
-
-    // finds all line segments containing 4 points
     public BruteCollinearPoints(Point[] points) {
-        validate(points);
-        final int numOfPoints = points.length;
+        // Throw error if null argument to constructor
+        if (points == null) throw new NullPointerException();
 
-        // iterate through every four elements
-        for (int i = 0; i < numOfPoints - 3; i++) {
-            for (int j = i + 1; j < numOfPoints - 2; j++) {
-                for (int k = j + 1; k < numOfPoints - 1; k++) {
-                    for (int l = k + 1; l < numOfPoints; l++) {
-                        // the fourth points are collinear
-                        if (points[i].slopeTo(points[j]) == points[i].slopeTo(points[k])
-                                && points[i].slopeTo(points[k]) == points[i].slopeTo(points[l])) {
-                            Point[] segment = { points[i], points[j], points[k], points[l] };
-                            Arrays.sort(segment);
-                            lineSegments.add(new LineSegment(segment[0], segment[3]));
+        // Check for null entries
+        checkNullEntries(points);
+
+        ArrayList<LineSegment> segmentsList = new ArrayList<LineSegment>();
+        Point[] pointsCopy = Arrays.copyOf(points, points.length);
+        Arrays.sort(pointsCopy);
+
+        // Check for duplicate points on sorted arrays of points
+        checkDuplicateEntries(points);
+
+        // Loop through array scanning 4 points at once
+        for (int i = 0; i < pointsCopy.length - 3; i++) {
+            for (int j = i + 1; j < pointsCopy.length - 2; j++) {
+                for (int k = j + 1; k < pointsCopy.length - 1; k++) {
+                    if (pointsCopy[i].slopeTo(pointsCopy[j]) != pointsCopy[i]
+                            .slopeTo(pointsCopy[k])) {
+                        continue;
+                    }
+                    for (int m = k + 1; m < pointsCopy.length; m++) {
+                        if (pointsCopy[i].slopeTo(pointsCopy[j]) == pointsCopy[i]
+                                .slopeTo(pointsCopy[k])
+                                && pointsCopy[i].slopeTo(pointsCopy[j]) == pointsCopy[i]
+                                .slopeTo(pointsCopy[m])) {
+                            LineSegment tempLineSegment = new LineSegment(pointsCopy[i],
+                                    pointsCopy[m]);
+                            if (!segmentsList.contains(tempLineSegment)) {
+                                segmentsList.add(tempLineSegment);
+                            }
                         }
                     }
                 }
             }
         }
+        segments = segmentsList.toArray(new LineSegment[segmentsList.size()]);
     }
 
-    // the number of line segments
-    public int numberOfSegments() {
-        return lineSegments.size();
-    }
-
-    // the line segments
-    public LineSegment[] segments() {
-        return lineSegments.toArray(new LineSegment[numberOfSegments()]);
-    }
-
-    private static void validate(Point[] points) {
-        if (points == null) {
-            throw new IllegalArgumentException();
-        }
-
-        for (Point point : points) {
-            if (point == null) {
-                throw new IllegalArgumentException();
-            }
-        }
-
+    private void checkNullEntries(Point[] points) {
         for (int i = 0; i < points.length; i++) {
-            for (int j = i + 1; j < points.length; j++) {
-                if ((points[j].equals(points[i]))) {
-                    throw new IllegalArgumentException();
-                }
-            }
+            if (points[i] == null) throw new NullPointerException();
         }
+    }
+
+    private void checkDuplicateEntries(Point[] points) {
+        for (int i = 0; i < points.length - 1; i++) {
+            if (points[i].compareTo(points[i + 1]) == 0)
+                throw new IllegalArgumentException();
+        }
+    }
+
+    public int numberOfSegments() {
+        return segments.length;
+    }
+
+    public LineSegment[] segments() {
+        return segments.clone();
+
     }
 
     public static void main(String[] args) {
-        // read the numOfSegments points from a file
+
+        // read the n points from a file
         In in = new In(args[0]);
         int n = in.readInt();
         Point[] points = new Point[n];
